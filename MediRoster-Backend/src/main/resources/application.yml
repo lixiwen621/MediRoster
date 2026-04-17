@@ -13,7 +13,7 @@ spring:
     # 勿在 URL 中加 connectionCollation=...utf8mb4...，驱动会据此把编码设成 utf8mb4，触发 UnsupportedEncodingException。
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:mediroster}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:lidengfu1993}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20

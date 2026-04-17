@@ -1,7 +1,10 @@
 package com.mediroster.entity;
 
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 对应表 medir_team。
@@ -9,6 +12,9 @@ import lombok.Data;
  * @author tongguo.li
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MedirTeam {
 
     private Long id;
