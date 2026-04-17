@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirRuleMetaMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirRuleMeta">
+        <id column="id" property="id"/>
+        <result column="rule_code" property="ruleCode"/>
+        <result column="category" property="category"/>
+        <result column="label_zh" property="labelZh"/>
+        <result column="value_type" property="valueType"/>
+        <result column="default_value" property="defaultValue"/>
+        <result column="options_json" property="optionsJson"/>
+        <result column="help_text" property="helpText"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="enabled" property="enabled"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findAllForUi" resultMap="BaseResultMap">
+        SELECT * FROM medir_rule_meta WHERE enabled = 1 ORDER BY category, sort_order, id
+    </select>
+</mapper>

@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Node
+node_modules/
+dist/
+
+# Build
+target/
+*.class
+*.jar
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Claude
+.claude/
+*.md.backup
+
+# Logs
+*.log

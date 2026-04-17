@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirRosterWeekWeekendStatMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirRosterWeekWeekendStat">
+        <id column="id" property="id"/>
+        <result column="roster_week_id" property="rosterWeekId"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="weekend_full_override" property="weekendFullOverride"/>
+        <result column="last_weekend_override" property="lastWeekendOverride"/>
+        <result column="override_reason" property="overrideReason"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findByRosterWeekId" resultMap="BaseResultMap">
+        SELECT * FROM medir_roster_weekend_stat
+        WHERE roster_week_id = #{rosterWeekId}
+        ORDER BY staff_id
+    </select>
+
+    <insert id="upsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO medir_roster_weekend_stat (
+            roster_week_id, staff_id, weekend_full_override, last_weekend_override, override_reason
+        ) VALUES (
+            #{rosterWeekId}, #{staffId}, #{weekendFullOverride}, #{lastWeekendOverride}, #{overrideReason}
+        )
+        ON DUPLICATE KEY UPDATE
+            weekend_full_override = VALUES(weekend_full_override),
+            last_weekend_override = VALUES(last_weekend_override),
+            override_reason = VALUES(override_reason)
+    </insert>
+
+    <delete id="deleteByWeekAndStaff">
+        DELETE FROM medir_roster_weekend_stat
+        WHERE roster_week_id = #{rosterWeekId} AND staff_id = #{staffId}
+    </delete>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirRosterWeekStaffPostMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirRosterWeekStaffPost">
+        <id column="id" property="id"/>
+        <result column="roster_week_id" property="rosterWeekId"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="display_post_id" property="displayPostId"/>
+        <result column="display_label" property="displayLabel"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <delete id="deleteByRosterWeekId">
+        DELETE FROM medir_roster_week_staff_post WHERE roster_week_id = #{rosterWeekId}
+    </delete>
+
+    <insert id="insertBatch">
+        INSERT INTO medir_roster_week_staff_post (roster_week_id, staff_id, display_post_id, display_label)
+        VALUES
+        <foreach collection="list" item="r" separator=",">
+            (#{r.rosterWeekId}, #{r.staffId}, #{r.displayPostId}, #{r.displayLabel})
+        </foreach>
+    </insert>
+
+    <select id="findByRosterWeekId" resultMap="BaseResultMap">
+        SELECT * FROM medir_roster_week_staff_post WHERE roster_week_id = #{rosterWeekId} ORDER BY staff_id
+    </select>
+</mapper>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirRosterCellMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirRosterCell">
+        <id column="id" property="id"/>
+        <result column="roster_week_id" property="rosterWeekId"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="work_date" property="workDate"/>
+        <result column="shift_type_id" property="shiftTypeId"/>
+        <result column="post_id" property="postId"/>
+        <result column="post_label" property="postLabel"/>
+        <result column="validation_exempt" property="validationExempt"/>
+        <result column="exempt_reason" property="exemptReason"/>
+        <result column="remark" property="remark"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <delete id="deleteByRosterWeekId">
+        DELETE FROM medir_roster_cell WHERE roster_week_id = #{rosterWeekId}
+    </delete>
+
+    <insert id="insertBatch">
+        INSERT INTO medir_roster_cell (
+            roster_week_id, staff_id, work_date, shift_type_id, post_id, post_label,
+            validation_exempt, exempt_reason, remark
+        ) VALUES
+        <foreach collection="list" item="c" separator=",">
+            (#{c.rosterWeekId}, #{c.staffId}, #{c.workDate}, #{c.shiftTypeId}, #{c.postId}, #{c.postLabel},
+             #{c.validationExempt}, #{c.exemptReason}, #{c.remark})
+        </foreach>
+    </insert>
+
+    <select id="findByRosterWeekId" resultMap="BaseResultMap">
+        SELECT * FROM medir_roster_cell WHERE roster_week_id = #{rosterWeekId}
+        ORDER BY staff_id, work_date
+    </select>
+</mapper>

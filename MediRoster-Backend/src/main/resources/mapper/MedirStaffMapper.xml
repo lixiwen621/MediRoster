@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirStaffMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirStaff">
+        <id column="id" property="id"/>
+        <result column="team_id" property="teamId"/>
+        <result column="name" property="name"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="member_type" property="memberType"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="status" property="status"/>
+        <result column="fixed_post_id" property="fixedPostId"/>
+        <result column="remark" property="remark"/>
+        <result column="deleted_at" property="deletedAt"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO medir_staff (
+            team_id, name, employee_no, phone, email, member_type, sort_order, status, fixed_post_id, remark
+        ) VALUES (
+            #{teamId}, #{name}, #{employeeNo}, #{phone}, #{email}, #{memberType}, #{sortOrder}, #{status}, #{fixedPostId}, #{remark}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE medir_staff SET
+            team_id = #{teamId},
+            name = #{name},
+            employee_no = #{employeeNo},
+            phone = #{phone},
+            email = #{email},
+            member_type = #{memberType},
+            sort_order = #{sortOrder},
+            status = #{status},
+            fixed_post_id = #{fixedPostId},
+            remark = #{remark}
+        WHERE id = #{id} AND deleted_at IS NULL
+    </update>
+
+    <update id="softDeleteById">
+        UPDATE medir_staff SET deleted_at = CURRENT_TIMESTAMP(3) WHERE id = #{id} AND deleted_at IS NULL
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM medir_staff WHERE id = #{id}
+    </select>
+
+    <select id="findByTeamId" resultMap="BaseResultMap">
+        SELECT * FROM medir_staff
+        WHERE team_id = #{teamId}
+        <if test="!includeDeleted">
+            AND deleted_at IS NULL
+        </if>
+        ORDER BY sort_order, id
+    </select>
+</mapper>

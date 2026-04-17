@@ -1,0 +1,76 @@
+# Mediroster Backend Cursor Rules
+
+## 通用规则
+- 与用户沟通统一使用简体中文。
+- 优先做最小可行改动，避免不必要重构。
+- 修改代码后，优先验证编译与关键测试。
+- 不要改动与当前需求无关的文件。
+
+## 技术栈约束
+- 后端使用 Java 17 + Spring Boot 3.x。
+- 数据访问层使用 MyBatis（Mapper 接口 + SQL）。
+- 数据库为 MySQL 8，字符集使用 utf8mb4。
+- 配置统一放在 `application.yml`，敏感信息使用环境变量。
+
+## 分层规范
+- `controller`：只做参数接收、校验、返回封装，不写业务逻辑。
+- `service`：承载核心业务逻辑与事务边界。
+- `mapper`：仅负责数据库读写。
+- `entity`：与数据表结构对应。
+- `dto`：用于接口入参与出参，不与 entity 混用。
+
+## 使用代码的规范
+- 创建新的文件时，作者名为tongguo.li，生成的文件注释上不要生成时间(@since 时间)，其他内容参考其他文件的注释。
+- 实体类转VO时，不要用BeanUtils.copyProperties，而是使用MapStruct进行转换。
+- 复杂的查询，尽量使用SQL语句查询
+- 代码请遵守阿里巴巴Java开发手册
+- 代码里有需要使用枚举的地方，请使用枚举。
+- 生成的代码不要把代码包的全路径写出来，而是使用import导入。
+- application.yml文件中，不要把敏感信息写出来，而是使用环境变量。
+- application-*.yml配置类中成对补充，并注明含义
+
+## 接口与错误处理
+- 统一返回结构（如 `ApiResponse`）。
+- 所有接口参数必须做校验（`jakarta.validation`）。
+- 使用全局异常处理（`@RestControllerAdvice`），避免将堆栈信息直接暴露给前端。
+- 对外可见的业务失败优先采用 **Preconditions 风格**（`checkArgument`、`checkState`、`checkNotNull` 等），避免散落 `if (...) throw ...`；**需要国际化时**使用 **`I18nPreconditions`** + `errorCode` + **`messageKey`**（见下文 `i18n/messages`），勿在业务代码中硬编码长句提示文案。
+
+## 工具包的使用
+- 使用lombok简化代码，避免手动生成getter、setter、equals、hashCode等方法。
+- 使用mapstruct简化对象映射，避免手动实现对象映射。
+- 引入hutool-all包，使用hutool工具类简化代码。
+- 引入guava包，使用guava工具类简化代码。
+- Guava：`Strings`、集合工具等可照常使用；**业务断言优先用 Preconditions 式 API 抛出**（对用户可见的失败同样适用该风格）。若使用 Guava 自带的 `com.google.common.base.Preconditions`，其提示一般为英文开发向，**仅适合不对最终用户展示英文也可接受的内部/开发态校验**；要对用户展示且需中英文等切换时，应改用下文 **`I18nPreconditions`**，由 `messageKey` 走资源文件。
+- **国际化（对用户可见、需中英文等）**：优先 **`I18nPreconditions.checkArgument` / `checkState` / `checkNotNull`**（参数为 `errorCode`、`messageKey`、可选占位符）；亦可 **`I18nMessageException`** 或 `BusinessException` + `messageKey`。文案统一放在 `src/main/resources/i18n/` 下，同一 basename 三套文件并列：`messages.properties`（默认）、`messages_zh_CN.properties`、`messages_en.properties`；`application.yml` 配置 `spring.messages.basename: i18n/messages`。
+
+## 命名与代码风格
+- 包名全小写，类名使用大驼峰，方法/变量使用小驼峰。
+- 常量使用全大写下划线。
+- 避免过长方法；单个方法应聚焦单一职责。
+- 对复杂逻辑可加简短注释，避免无意义注释。
+
+## 数据库与SQL规范
+- 建表必须包含 `created_at`、`updated_at`。
+- **MySQL 建表 DDL 不声明 `FOREIGN KEY` 外键**；表间引用关系在应用层与业务逻辑中维护，必要时用普通索引支撑查询；spec 中的 `ddl.sql` 须遵守本条。
+- **状态与类型类字段**：在表结构层优先使用 **整型（`TINYINT`/`SMALLINT`）** 存储枚举，**禁止**用 `VARCHAR` 存 `active/inactive`、`draft/published` 等英文单词；在列 **COMMENT** 中写清取值含义（例：`1=在职 2=停用`）。Java 侧用 **枚举或命名常量** 与数据库取值一一对应；对外 API 若需字符串展示，在 DTO/文档中说明与数字的映射关系。
+- **布尔语义字段**：凡用 `TINYINT` 表示 **是/否、真/假** 的列（如 `is_*`、`enabled`、是否计入某统计等），须在列 **COMMENT** 中写明布尔含义：**`0=否(false) 1=是(true)`**；若为「停用/启用」类开关，可写 **`0=停用 1=启用`** 并注明与布尔语义一致。避免裸 `0/1` 而无文字说明。
+- 关键查询条件必须建立索引。
+- 涉及幂等的写操作，必须设计唯一键或幂等键。
+- 应用层用 **枚举或 `public static final` 常量** 与数据库整型取值严格对应；对外 API 在文档或 DTO 中注明数字与含义，避免魔法数。
+
+## 测试与可维护性
+- 新增业务接口至少补充基础单元测试或集成测试之一。
+- 修复缺陷时优先补回归测试。
+- 引入新依赖前优先复用现有组件，并说明理由。
+
+# Spec Kit Workflow
+- 本项目遵循 Spec-Driven Development。
+- 所有开发任务必须参考 `.speckit/` (或 `.specify/`) 目录下的文档。
+- 在写代码前，必须先读取 `.specify/memory/constitution.md` 了解架构约束（若后续在 `.specify/` 根目录增加正式 `constitution.md`，以根目录文件为准）。
+- 如果用户要求的功能不在 spec 中，请先建议更新 spec 文档。
+
+## Spec 与文档同步（强制）
+- **业务规则、验收标准、统计口径、流程** 有任何变更时，必须同步更新 `.specify/requirements-lab-roster-scheduling.md`，并在该文档 **§17 变更记录** 中追加一行（版本或日期、简述）。
+- **接口路径、请求/响应字段、HTTP 语义、错误码、导出/文件流约定** 等有任何变更时，必须同步更新 `.specify/docs/rest-api-v1-medir.md`；若文档尚无统一「修订历史」小节，应在首次涉及接口变更时补充简要修订说明，避免与实现脱节。
+- **同一轮改动**应尽量同时更新：实现代码 + 对应 spec；禁止仅改代码而长期不更新上述文档（用户明确声明仅草稿/实验性提交且稍后补文档的除外，但需在对话中说明）。
+- 若变更涉及 **DDL**（表结构、种子数据），须同步维护 `.specify/ddl/` 下相关脚本或说明，并与需求/接口描述一致。

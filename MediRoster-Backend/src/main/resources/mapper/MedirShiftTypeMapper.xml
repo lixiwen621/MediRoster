@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirShiftTypeMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirShiftType">
+        <id column="id" property="id"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="name_zh" property="nameZh"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_rest" property="isRest"/>
+        <result column="is_duty_zhong" property="isDutyZhong"/>
+        <result column="is_duty_da" property="isDutyDa"/>
+        <result column="is_qiban" property="isQiban"/>
+        <result column="is_small_night" property="isSmallNight"/>
+        <result column="counts_daytime_headcount" property="countsDaytimeHeadcount"/>
+        <result column="counts_weekend_full_day_stat" property="countsWeekendFullDayStat"/>
+        <result column="counts_as_zhong_for_structure" property="countsAsZhongForStructure"/>
+        <result column="counts_as_lin_for_structure" property="countsAsLinForStructure"/>
+        <result column="next_day_must_rest" property="nextDayMustRest"/>
+        <result column="enabled" property="enabled"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO medir_shift_type (
+            type_code, name_zh, sort_order,
+            is_rest, is_duty_zhong, is_duty_da, is_qiban, is_small_night,
+            counts_daytime_headcount, counts_weekend_full_day_stat,
+            counts_as_zhong_for_structure, counts_as_lin_for_structure,
+            next_day_must_rest, enabled
+        ) VALUES (
+            #{typeCode}, #{nameZh}, #{sortOrder},
+            #{isRest}, #{isDutyZhong}, #{isDutyDa}, #{isQiban}, #{isSmallNight},
+            #{countsDaytimeHeadcount}, #{countsWeekendFullDayStat},
+            #{countsAsZhongForStructure}, #{countsAsLinForStructure},
+            #{nextDayMustRest}, #{enabled}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE medir_shift_type SET
+            type_code = #{typeCode},
+            name_zh = #{nameZh},
+            sort_order = #{sortOrder},
+            is_rest = #{isRest},
+            is_duty_zhong = #{isDutyZhong},
+            is_duty_da = #{isDutyDa},
+            is_qiban = #{isQiban},
+            is_small_night = #{isSmallNight},
+            counts_daytime_headcount = #{countsDaytimeHeadcount},
+            counts_weekend_full_day_stat = #{countsWeekendFullDayStat},
+            counts_as_zhong_for_structure = #{countsAsZhongForStructure},
+            counts_as_lin_for_structure = #{countsAsLinForStructure},
+            next_day_must_rest = #{nextDayMustRest},
+            enabled = #{enabled}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM medir_shift_type WHERE id = #{id}
+    </select>
+
+    <select id="findByTypeCode" resultMap="BaseResultMap">
+        SELECT * FROM medir_shift_type WHERE type_code = #{typeCode}
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM medir_shift_type ORDER BY sort_order, id
+    </select>
+</mapper>

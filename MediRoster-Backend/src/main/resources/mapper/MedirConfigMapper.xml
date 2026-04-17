@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediroster.mapper.MedirConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.mediroster.entity.MedirConfig">
+        <id column="id" property="id"/>
+        <result column="team_id" property="teamId"/>
+        <result column="config_key" property="configKey"/>
+        <result column="config_value" property="configValue"/>
+        <result column="value_type" property="valueType"/>
+        <result column="category" property="category"/>
+        <result column="description" property="description"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="enabled" property="enabled"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO medir_config (
+            team_id, config_key, config_value, value_type, category, description, sort_order, enabled
+        ) VALUES (
+            #{teamId}, #{configKey}, #{configValue}, #{valueType}, #{category}, #{description}, #{sortOrder}, #{enabled}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE medir_config SET
+            team_id = #{teamId},
+            config_key = #{configKey},
+            config_value = #{configValue},
+            value_type = #{valueType},
+            category = #{category},
+            description = #{description},
+            sort_order = #{sortOrder},
+            enabled = #{enabled}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM medir_config WHERE id = #{id}
+    </delete>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM medir_config WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM medir_config ORDER BY team_id, sort_order, id
+    </select>
+
+    <select id="findByTeamId" resultMap="BaseResultMap">
+        SELECT * FROM medir_config WHERE team_id = #{teamId} ORDER BY sort_order, id
+    </select>
+
+    <select id="findByTeamIdAndConfigKey" resultMap="BaseResultMap">
+        SELECT * FROM medir_config WHERE team_id = #{teamId} AND config_key = #{configKey}
+    </select>
+</mapper>
