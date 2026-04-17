@@ -65,7 +65,8 @@ public class MedirRosterService {
 
     private static final String CONFIG_KEY_WEEKEND_FULL_SHIFT_TYPES = "stats.weekend_full_shift_types";
     private static final String CONFIG_KEY_HEADCOUNT_WEEKDAY_134 = "headcount.weekday_134";
-    private static final String CONFIG_KEY_HEADCOUNT_WEEKDAY_25 = "headcount.weekday_25";
+    private static final String CONFIG_KEY_HEADCOUNT_TUESDAY = "headcount.weekday_2";
+    private static final String CONFIG_KEY_HEADCOUNT_FRIDAY = "headcount.weekday_5";
     private static final String CONFIG_KEY_HEADCOUNT_WEEKEND_HOLIDAY = "headcount.weekend_holiday";
     private static final String CONFIG_KEY_STRUCTURE_MIN_ZHONG = "structure.min_zhong";
     private static final String CONFIG_KEY_STRUCTURE_MIN_LIN = "structure.min_lin";
@@ -191,6 +192,7 @@ public class MedirRosterService {
                 shiftByCode.get("ZHONG"), CONFLICT, "error.roster.generate.missingShiftType", "ZHONG");
         MedirShiftType lin = I18nPreconditions.checkNotNull(
                 shiftByCode.get("LIN"), CONFLICT, "error.roster.generate.missingShiftType", "LIN");
+        MedirShiftType guisuiQuan = shiftByCode.get("GUISUI_QUAN");
 
         List<MedirRosterCell> existingRows = rosterCellMapper.findByRosterWeekId(rosterWeekId);
         Map<String, MedirRosterCell> cellByStaffAndDate = new HashMap<>();
@@ -245,7 +247,8 @@ public class MedirRosterService {
             for (MedirStaff staff : candidates) {
                 MedirShiftType picked = workAssignees.contains(staff.getId())
                         ? pickShiftType(
-                                requiredHeadcount, requiredZhong, requiredLin, daytimeCount, zhongCount, linCount, zhong, lin, xiu)
+                                requiredHeadcount, requiredZhong, requiredLin, daytimeCount, zhongCount, linCount,
+                                weeklyStats.get(staff.getId()).fullDayCount, zhong, lin, guisuiQuan, xiu)
                         : xiu;
                 MedirRosterCell generated = new MedirRosterCell();
                 generated.setRosterWeekId(rosterWeekId);
@@ -273,6 +276,7 @@ public class MedirRosterService {
                 }
                 if (picked.getCountsAsLinForStructure() != null && picked.getCountsAsLinForStructure() == 1) {
                     linCount++;
+                    stat.fullDayCount++;
                 }
             }
         }
@@ -701,8 +705,11 @@ public class MedirRosterService {
 
     private int resolveRequiredHeadcount(Long teamId, LocalDate workDate) {
         DayOfWeek dayOfWeek = workDate.getDayOfWeek();
-        if (dayOfWeek == DayOfWeek.TUESDAY || dayOfWeek == DayOfWeek.FRIDAY) {
-            return resolveIntConfig(teamId, CONFIG_KEY_HEADCOUNT_WEEKDAY_25, 5);
+        if (dayOfWeek == DayOfWeek.TUESDAY) {
+            return resolveIntConfig(teamId, CONFIG_KEY_HEADCOUNT_TUESDAY, 6);
+        }
+        if (dayOfWeek == DayOfWeek.FRIDAY) {
+            return resolveIntConfig(teamId, CONFIG_KEY_HEADCOUNT_FRIDAY, 5);
         }
         if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
             return resolveIntConfig(teamId, CONFIG_KEY_HEADCOUNT_WEEKEND_HOLIDAY, 3);
@@ -761,8 +768,10 @@ public class MedirRosterService {
             int daytimeCount,
             int zhongCount,
             int linCount,
+            int staffFullDayCount,
             MedirShiftType zhong,
             MedirShiftType lin,
+            MedirShiftType guisuiQuan,
             MedirShiftType xiu) {
         int dayNeed = Math.max(0, requiredHeadcount - daytimeCount);
         if (dayNeed <= 0) {
@@ -771,10 +780,11 @@ public class MedirRosterService {
         if (zhongCount < requiredZhong) {
             return zhong;
         }
-        if (linCount < requiredLin) {
+        // 每人每周最多 2 个全天（临/骨髓全），已达上限则排中班
+        if (staffFullDayCount < 2) {
             return lin;
         }
-        return lin;
+        return zhong;
     }
 
     private String cellKey(Long staffId, LocalDate workDate) {
@@ -846,5 +856,6 @@ public class MedirRosterService {
 
         private int assignedCount;
         private int restCount;
+        private int fullDayCount;
     }
 }
