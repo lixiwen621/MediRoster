@@ -7,7 +7,7 @@ package com.mediroster.common.exception;
  */
 public class I18nMessageException extends BusinessException {
 
-    public I18nMessageException(String errorCode, String messageKey, Object... messageArgs) {
+    public I18nMessageException(int errorCode, String messageKey, Object... messageArgs) {
         super(errorCode, messageKey, messageArgs);
     }
 }

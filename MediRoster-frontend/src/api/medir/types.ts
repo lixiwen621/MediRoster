@@ -4,7 +4,7 @@
 
 export interface ApiResponse<T> {
   success: boolean
-  code: string
+  code: number
   message: string
   data: T
 }

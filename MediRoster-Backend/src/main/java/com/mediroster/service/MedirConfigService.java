@@ -1,5 +1,7 @@
 package com.mediroster.service;
 
+import static com.mediroster.common.exception.BusinessException.*;
+
 import com.mediroster.common.i18n.I18nPreconditions;
 import com.mediroster.dto.request.ConfigUpsertRequest;
 import com.mediroster.dto.response.ConfigResponse;
@@ -19,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MedirConfigService {
 
-    private static final String NOT_FOUND = "NOT_FOUND";
 
     private final MedirConfigMapper configMapper;
 
@@ -41,7 +42,7 @@ public class MedirConfigService {
     @Transactional
     public ConfigResponse create(ConfigUpsertRequest req) {
         MedirConfig exist = configMapper.findByTeamIdAndConfigKey(req.teamId(), req.configKey());
-        I18nPreconditions.checkArgument(exist == null, "CONFLICT", "error.config.keyExists");
+        I18nPreconditions.checkArgument(exist == null, CONFLICT, "error.config.keyExists");
         MedirConfig c = new MedirConfig();
         apply(c, req);
         configMapper.insert(c);
@@ -54,7 +55,7 @@ public class MedirConfigService {
                 configMapper.findById(id), NOT_FOUND, "error.config.notFound");
         MedirConfig other = configMapper.findByTeamIdAndConfigKey(req.teamId(), req.configKey());
         I18nPreconditions.checkArgument(
-                other == null || other.getId().equals(id), "CONFLICT", "error.config.keyConflict");
+                other == null || other.getId().equals(id), CONFLICT, "error.config.keyConflict");
         apply(c, req);
         configMapper.updateById(c);
         return toResponse(configMapper.findById(id));

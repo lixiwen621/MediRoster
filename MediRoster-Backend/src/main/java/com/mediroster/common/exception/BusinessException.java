@@ -11,16 +11,23 @@ import lombok.Getter;
 @Getter
 public class BusinessException extends RuntimeException {
 
-    private final String errorCode;
+    public static final int NOT_FOUND = 404;
+    public static final int OPTIMISTIC_LOCK = 409;
+    public static final int CONFLICT = 409;
+    public static final int VALIDATION_ERROR = 400;
+    public static final int DUPLICATE_KEY = 409;
+    public static final int INTERNAL_ERROR = 500;
+
+    private final int errorCode;
     private final String messageKey;
     private final Object[] messageArgs;
 
     /**
-     * @param errorCode 业务错误码（如 NOT_FOUND）
+     * @param errorCode 业务错误码（HTTP 状态码）
      * @param messageKey 国际化消息键
      * @param messageArgs 消息占位符参数（如 {0}）
      */
-    public BusinessException(String errorCode, String messageKey, Object... messageArgs) {
+    public BusinessException(int errorCode, String messageKey, Object... messageArgs) {
         super(messageKey);
         this.errorCode = errorCode;
         this.messageKey = messageKey;

@@ -28,13 +28,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    private static final String VALIDATION_ERROR = "VALIDATION_ERROR";
-    private static final String DUPLICATE_KEY = "DUPLICATE_KEY";
-
-    private static final String NOT_FOUND = "NOT_FOUND";
-    private static final String OPTIMISTIC_LOCK = "OPTIMISTIC_LOCK";
-    private static final String CONFLICT = "CONFLICT";
-
     private final MessageSource messageSource;
 
     private String msg(String code, Object... args) {
@@ -46,8 +39,8 @@ public class GlobalExceptionHandler {
         String text = msg(ex.getMessageKey(), ex.getMessageArgs());
         log.warn("Business rule: [{}] {}", ex.getErrorCode(), text);
         HttpStatus status = switch (ex.getErrorCode()) {
-            case NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case OPTIMISTIC_LOCK, CONFLICT -> HttpStatus.CONFLICT;
+            case BusinessException.NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case 409 -> HttpStatus.CONFLICT;
             default -> HttpStatus.BAD_REQUEST;
         };
         return ResponseEntity.status(status).body(ApiResponse.fail(ex.getErrorCode(), text));
@@ -57,7 +50,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDuplicateKey(DuplicateKeyException ex) {
         log.warn("Duplicate key: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail(DUPLICATE_KEY, msg("error.duplicateKey")));
+                .body(ApiResponse.fail(BusinessException.DUPLICATE_KEY, msg("error.duplicateKey")));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -68,7 +61,7 @@ public class GlobalExceptionHandler {
                 .orElse(msg("error.validation.failed"));
         log.warn("Validation failed: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, message));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, message));
     }
 
     @ExceptionHandler(BindException.class)
@@ -79,7 +72,7 @@ public class GlobalExceptionHandler {
                 .orElse(msg("error.bind.failed"));
         log.warn("Bind failed: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, message));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, message));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -90,14 +83,14 @@ public class GlobalExceptionHandler {
                 .orElse(msg("error.constraint.violation"));
         log.warn("Constraint violation: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, message));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, message));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParam(MissingServletRequestParameterException ex) {
         log.warn("Missing parameter: {}", ex.getParameterName());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, msg("error.missingParameter", ex.getParameterName())));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, msg("error.missingParameter", ex.getParameterName())));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -105,20 +98,20 @@ public class GlobalExceptionHandler {
         String name = ex.getName() != null ? ex.getName() : "parameter";
         log.warn("Type mismatch: {} value={}", name, ex.getValue());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, msg("error.typeMismatch", name)));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, msg("error.typeMismatch", name)));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException ex) {
         log.warn("Unreadable HTTP message: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(VALIDATION_ERROR, msg("error.badJson")));
+                .body(ApiResponse.fail(BusinessException.VALIDATION_ERROR, msg("error.badJson")));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail("INTERNAL_ERROR", msg("error.internal")));
+                .body(ApiResponse.fail(BusinessException.INTERNAL_ERROR, msg("error.internal")));
     }
 }

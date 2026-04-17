@@ -13,11 +13,11 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `success` | boolean | 是否成功 |
-| `code` | string | 成功时一般为 `"0"`；失败时为业务/错误码 |
+| `code` | integer | 成功时为 `0`；失败时为 HTTP 状态码（400/404/409/500 等） |
 | `message` | string | 提示文案 |
 | `data` | T | 业务载荷；无体成功（如删除）时可为 `null` |
 
-失败时：`success=false`；HTTP：`400` 参数/校验，`404` 资源不存在（`code=NOT_FOUND`），`409` 冲突（`code=CONFLICT` / `OPTIMISTIC_LOCK` / `DUPLICATE_KEY` 等）。
+失败时：`success=false`；HTTP：`400` 参数/校验，`404` 资源不存在（`code=404`），`409` 冲突（`code=409` 等）。
 
 **文件导出（例外）**：`GET .../export` 成功时响应体为 **Excel 二进制**（`.xlsx`），**不使用**外层 `ApiResponse` JSON；失败时仍按全局异常返回 JSON。
 

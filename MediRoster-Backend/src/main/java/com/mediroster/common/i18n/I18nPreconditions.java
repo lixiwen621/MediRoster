@@ -16,7 +16,7 @@ public final class I18nPreconditions {
     /**
      * 与 Guava {@code checkArgument} 对应：入参/调用方约定不满足时抛出。
      */
-    public static void checkArgument(boolean expression, String errorCode, String messageKey, Object... messageArgs) {
+    public static void checkArgument(boolean expression, int errorCode, String messageKey, Object... messageArgs) {
         if (!expression) {
             throw new BusinessException(errorCode, messageKey, messageArgs);
         }
@@ -25,7 +25,7 @@ public final class I18nPreconditions {
     /**
      * 与 Guava {@code checkState} 对应：对象内部状态不满足时抛出。
      */
-    public static void checkState(boolean expression, String errorCode, String messageKey, Object... messageArgs) {
+    public static void checkState(boolean expression, int errorCode, String messageKey, Object... messageArgs) {
         if (!expression) {
             throw new BusinessException(errorCode, messageKey, messageArgs);
         }
@@ -34,7 +34,7 @@ public final class I18nPreconditions {
     /**
      * 与 Guava {@code checkNotNull} 对应：{@code null} 时抛出，否则返回引用。
      */
-    public static <T> T checkNotNull(T reference, String errorCode, String messageKey, Object... messageArgs) {
+    public static <T> T checkNotNull(T reference, int errorCode, String messageKey, Object... messageArgs) {
         if (reference == null) {
             throw new BusinessException(errorCode, messageKey, messageArgs);
         }

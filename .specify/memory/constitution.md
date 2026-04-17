@@ -14,8 +14,8 @@
 后端所有错误提示、用户文案禁止硬编码中文字符串，必须通过 i18n Key 获取。资源文件位于 `messages_zh_CN.properties` / `messages_en.properties`。
 
 ### 4. 统一响应体
-所有 REST 接口返回统一 `ApiResponse<T>` 结构：`{ success: boolean, code: string, message: string, data: T }`。
-- 成功时 `success=true, code="0"`
+所有 REST 接口返回统一 `ApiResponse<T>` 结构：`{ success: boolean, code: int, message: string, data: T }`。
+- 成功时 `success=true, code=0`
 - 失败时按 HTTP 状态码 + 业务码区分（400/404/409）
 - 文件导出（Excel）为例外，成功时返回二进制流
 

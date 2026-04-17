@@ -2,6 +2,8 @@ package com.mediroster.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import static com.mediroster.common.exception.BusinessException.*;
+
 import com.mediroster.common.i18n.I18nPreconditions;
 import com.mediroster.dto.request.RosterCellReplaceRequest;
 import com.mediroster.dto.request.RosterStaffPostReplaceRequest;
@@ -61,8 +63,6 @@ public class MedirRosterService {
 
     private static final Gson GSON = new Gson();
 
-    private static final String NOT_FOUND = "NOT_FOUND";
-    private static final String CONFLICT = "CONFLICT";
     private static final String CONFIG_KEY_WEEKEND_FULL_SHIFT_TYPES = "stats.weekend_full_shift_types";
     private static final String CONFIG_KEY_HEADCOUNT_WEEKDAY_134 = "headcount.weekday_134";
     private static final String CONFIG_KEY_HEADCOUNT_WEEKDAY_25 = "headcount.weekday_25";
@@ -120,7 +120,7 @@ public class MedirRosterService {
         w.setRemark(req.remark());
         w.setVersion(req.version());
         int n = rosterWeekMapper.updateById(w);
-        I18nPreconditions.checkArgument(n != 0, "OPTIMISTIC_LOCK", "error.optimisticLock");
+        I18nPreconditions.checkArgument(n != 0, OPTIMISTIC_LOCK, "error.optimisticLock");
         return toWeekResponse(rosterWeekMapper.findById(id));
     }
 
@@ -149,10 +149,10 @@ public class MedirRosterService {
             MedirStaff staff = staffMapper.findById(item.staffId());
             I18nPreconditions.checkArgument(
                     staff != null && staff.getDeletedAt() == null && teamId.equals(staff.getTeamId()),
-                    "INVALID_STAFF", "error.roster.invalidStaff", item.staffId());
+                    VALIDATION_ERROR, "error.roster.invalidStaff", item.staffId());
             I18nPreconditions.checkNotNull(
                     shiftTypeMapper.findById(item.shiftTypeId()),
-                    "INVALID_SHIFT", "error.roster.invalidShift", item.shiftTypeId());
+                    VALIDATION_ERROR, "error.roster.invalidShift", item.shiftTypeId());
             MedirRosterCell c = new MedirRosterCell();
             c.setRosterWeekId(rosterWeekId);
             c.setStaffId(item.staffId());
@@ -177,7 +177,7 @@ public class MedirRosterService {
         GenerateOptions options = normalizeGenerateOptions(req);
         List<MedirStaff> staffs = new ArrayList<>(staffMapper.findByTeamId(week.getTeamId(), false));
         staffs.sort(Comparator.comparing(MedirStaff::getSortOrder).thenComparing(MedirStaff::getId));
-        I18nPreconditions.checkArgument(!staffs.isEmpty(), "CONFLICT", "error.roster.generate.noStaff");
+        I18nPreconditions.checkArgument(!staffs.isEmpty(), CONFLICT, "error.roster.generate.noStaff");
 
         Map<Long, MedirShiftType> shiftById = new HashMap<>();
         Map<String, MedirShiftType> shiftByCode = new HashMap<>();
@@ -186,11 +186,11 @@ public class MedirRosterService {
             shiftByCode.put(shiftType.getTypeCode(), shiftType);
         }
         MedirShiftType xiu = I18nPreconditions.checkNotNull(
-                shiftByCode.get("XIU"), "CONFLICT", "error.roster.generate.missingShiftType", "XIU");
+                shiftByCode.get("XIU"), CONFLICT, "error.roster.generate.missingShiftType", "XIU");
         MedirShiftType zhong = I18nPreconditions.checkNotNull(
-                shiftByCode.get("ZHONG"), "CONFLICT", "error.roster.generate.missingShiftType", "ZHONG");
+                shiftByCode.get("ZHONG"), CONFLICT, "error.roster.generate.missingShiftType", "ZHONG");
         MedirShiftType lin = I18nPreconditions.checkNotNull(
-                shiftByCode.get("LIN"), "CONFLICT", "error.roster.generate.missingShiftType", "LIN");
+                shiftByCode.get("LIN"), CONFLICT, "error.roster.generate.missingShiftType", "LIN");
 
         List<MedirRosterCell> existingRows = rosterCellMapper.findByRosterWeekId(rosterWeekId);
         Map<String, MedirRosterCell> cellByStaffAndDate = new HashMap<>();
@@ -333,7 +333,7 @@ public class MedirRosterService {
                 MedirStaff staff = staffMapper.findById(item.staffId());
                 I18nPreconditions.checkArgument(
                         staff != null && staff.getDeletedAt() == null && teamId.equals(staff.getTeamId()),
-                        "INVALID_STAFF", "error.roster.invalidStaff", item.staffId());
+                        VALIDATION_ERROR, "error.roster.invalidStaff", item.staffId());
                 MedirRosterWeekStaffPost r = new MedirRosterWeekStaffPost();
                 r.setRosterWeekId(rosterWeekId);
                 r.setStaffId(item.staffId());
@@ -397,7 +397,7 @@ public class MedirRosterService {
         }
         for (RosterWeekWeekendStatReplaceRequest.Item item : req.items()) {
             I18nPreconditions.checkNotNull(
-                    staffMap.get(item.staffId()), "INVALID_STAFF", "error.roster.invalidStaff", item.staffId());
+                    staffMap.get(item.staffId()), VALIDATION_ERROR, "error.roster.invalidStaff", item.staffId());
             boolean clearOverride = item.weekendFullOverride() == null
                     && item.lastWeekendOverride() == null
                     && Strings.isNullOrEmpty(item.overrideReason());
@@ -592,7 +592,7 @@ public class MedirRosterService {
                 : req.strategy();
         I18nPreconditions.checkArgument(
                 STRATEGY_FILL_UNCONFIRMED.equals(strategy) || STRATEGY_OVERWRITE_ALL.equals(strategy),
-                "CONFLICT",
+                CONFLICT,
                 "error.roster.generate.invalidStrategy",
                 strategy);
         int respectManualConfirmed = req != null && req.respectManualConfirmed() != null

@@ -1,5 +1,7 @@
 package com.mediroster.service;
 
+import static com.mediroster.common.exception.BusinessException.*;
+
 import com.mediroster.common.i18n.I18nPreconditions;
 import com.mediroster.dto.request.StaffCapabilityUpsertRequest;
 import com.mediroster.dto.response.StaffCapabilityResponse;
@@ -21,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MedirStaffCapabilityService {
 
-    private static final String NOT_FOUND = "NOT_FOUND";
 
     private final MedirStaffCapabilityMapper capabilityMapper;
     private final MedirStaffMapper staffMapper;

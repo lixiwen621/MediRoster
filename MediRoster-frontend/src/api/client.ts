@@ -2,10 +2,10 @@ import axios, { type AxiosError } from 'axios'
 import type { ApiResponse } from './medir/types'
 
 export class ApiBusinessError extends Error {
-  readonly code: string
+  readonly code: number
   readonly httpStatus?: number
 
-  constructor(code: string, message: string, httpStatus?: number) {
+  constructor(code: number, message: string, httpStatus?: number) {
     super(message)
     this.name = 'ApiBusinessError'
     this.code = code
@@ -42,10 +42,10 @@ apiClient.interceptors.request.use((config) => {
 export async function unwrap<T>(promise: Promise<{ data: ApiResponse<T | null> }>): Promise<T> {
   const { data } = await promise
   if (!data.success) {
-    throw new ApiBusinessError(data.code ?? 'UNKNOWN', data.message ?? '请求失败')
+    throw new ApiBusinessError(data.code ?? 0, data.message ?? '请求失败')
   }
   if (data.data === null || data.data === undefined) {
-    throw new ApiBusinessError('EMPTY_DATA', '响应 data 为空')
+    throw new ApiBusinessError(0, '响应 data 为空')
   }
   return data.data
 }
@@ -54,7 +54,7 @@ export async function unwrap<T>(promise: Promise<{ data: ApiResponse<T | null> }
 export async function unwrapOk(promise: Promise<{ data: ApiResponse<unknown> }>): Promise<void> {
   const { data } = await promise
   if (!data.success) {
-    throw new ApiBusinessError(data.code ?? 'UNKNOWN', data.message ?? '请求失败')
+    throw new ApiBusinessError(data.code ?? 0, data.message ?? '请求失败')
   }
 }
 
