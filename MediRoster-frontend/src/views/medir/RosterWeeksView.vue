@@ -464,10 +464,13 @@ async function saveCells(): Promise<boolean> {
   saving.value = true
   error.value = ''
   try {
-    await putRosterWeekCells(selected.value.id, {
+    const weekendStats = await putRosterWeekCells(selected.value.id, {
       cells: buildCellsPayload(),
     })
-    await reloadWeekMatrix()
+    selected.value = await getRosterWeek(selected.value.id)
+    const cells = await getRosterWeekCells(selected.value.id)
+    applyCells(cells)
+    applyWeekendStats(weekendStats)
     return true
   } catch (e) {
     error.value = getAxiosErrorMessage(e)
@@ -486,8 +489,11 @@ async function clearWeekCells() {
   clearNotice.value = ''
   generateNotice.value = ''
   try {
-    await putRosterWeekCells(selected.value.id, { cells: [] })
-    await reloadWeekMatrix()
+    const weekendStats = await putRosterWeekCells(selected.value.id, { cells: [] })
+    selected.value = await getRosterWeek(selected.value.id)
+    const cells = await getRosterWeekCells(selected.value.id)
+    applyCells(cells)
+    applyWeekendStats(weekendStats)
     clearNotice.value = '已清空本周排班'
   } catch (e) {
     error.value = getAxiosErrorMessage(e)

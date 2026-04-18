@@ -153,8 +153,12 @@ export async function getRosterWeekCells(weekId: number): Promise<MedirRosterCel
   return unwrap(apiClient.get(`${M}/roster-weeks/${weekId}/cells`))
 }
 
-export async function putRosterWeekCells(weekId: number, body: RosterCellReplaceRequest): Promise<void> {
-  await unwrapOk(apiClient.put(`${M}/roster-weeks/${weekId}/cells`, body))
+/** 保存后服务端会按当周周六、日班次重算周末统计（与 GET weekend-stats 一致），并随响应返回。 */
+export async function putRosterWeekCells(
+  weekId: number,
+  body: RosterCellReplaceRequest,
+): Promise<MedirRosterWeekendStat[]> {
+  return unwrap(apiClient.put(`${M}/roster-weeks/${weekId}/cells`, body))
 }
 
 export async function getRosterWeekStaffPosts(weekId: number): Promise<MedirStaffPostRow[]> {

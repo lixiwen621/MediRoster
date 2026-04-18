@@ -503,7 +503,7 @@
 | `exemptReason` | string | 否 | |
 | `remark` | string | 否 | |
 
-**`data`**：`null`。
+**`data`**：`RosterWeekWeekendStatResponse[]`。保存成功后服务端根据**已落库**的周六、日单元格即时重算「周末全天」「上周末」**自动值**，并与 `medir_roster_weekend_stat` 中的人工覆盖合并，语义与 `GET .../weekend-stats` **一致**；前端可直接用响应刷新两列，无需再单独请求 `GET .../weekend-stats`（仍可再拉取校验）。
 
 **清空整周排班（前端常用）**
 
@@ -524,10 +524,13 @@
 
 按策略自动生成排班单元格。**后端已实现**；请求/响应字段以 **OpenAPI**（`GET /api/v1/openapi`）或 **Swagger UI**（`GET /swagger-ui.html`）为准，本文仅作说明。
 
-- **默认策略 `FILL_UNCONFIRMED`**：只对当周**尚未存在单元格**的「人员 × 工作日」组合生成班次；若某 `staffId` 在某 `workDate` 已有单元格，则视为已人工确认，在 `respectManualConfirmed=1`（默认）时**跳过**该格。
+- **默认策略 `FILL_UNCONFIRMED`**：只对当周**尚未存在单元格**的「人员 × 工作日」组合生成班次；若某 `staffId` 在某 `workDate` 已有单元格，则视为已人工确认，在 `respectManualConfirmed=1`（默认）时**跳过**该格。**服务端在本次请求开始时**以库内已有单元格为准建立「冻结」集合：仅对空白格写入新班次；**落库后的周维度后处理**（为满足每人每周 2 个全天等规则而做的互换、纯「中」升「临」、超额「临」降「中」）**不会修改**这些已存在格子。因此自定义班次须在调用补全**前**已通过 `PUT .../cells` 保存；仅界面修改未保存则仍按旧数据参与冻结判定。
 - **`OVERWRITE_ALL` + `respectManualConfirmed=0`**：可整周重算并覆盖已有单元格（高风险，**前端须二次确认**）。
 - **试算**：`dryRun=1` 时仅返回统计、**不落库**；`dryRun=0` 时写入数据库。
 - **留痕**：`reason` 会参与服务端日志记录，便于追溯。
+- **每人每周「全天」上下限（临/骨髓全，与 `medir_shift_type.counts_as_lin_for_structure` 一致）**：单日需补「结构」中的「中」时，**优先**让本周**已满 2 个全天**的人上「中」；同日待生成的候选人员按**本周已累积全天次数降序**处理，使「临」更容易落在尚未满 2 个全天的人身上（适用于多日人工锁定值班链等场景）。在「中」已满足下限后，生成逻辑**优先**为尚未凑满 2 个全天的人排「临」；**已满 2 个全天者只排「中」**，不因当日仍缺 `structure.min_lin` 而再给同一人追加「临」。落库后另有后处理：与同天他人互换、在单日「中」有富余时升「临」、在单日「结构临」多于 `min_lin` 时对超额人员降「临/骨髓全」为「中」，以尽量对齐**每人每周恰好 2 个**全天。若人工已锁满一周且无富余可借调，仍可能无法凑满（与业务 §19.3 整表强校验未闭环一致）。
+- **业务优先级与扩展（v0.15，见需求 §20）**：实现顺序为——冻结格 → 每人每周休息目标（默认 2 天，不足时先下调周四/五人头下限）→ 手工已满 2 结构全天不再加临 → 每人 1～2 个结构全天 → 每日人头与结构。相关 `medir_config`：`rest.target_min_days`、`headcount.flex_floor_thursday`、`headcount.flex_floor_friday`、`stats.weekend_full_exclude_names`（如 `["程海荣"]` 则「周末全天」自动统计恒为 0）、`roster.weekend_lin_rotate_by_sort_order`（周末按行序轮临，默认开启）。
+- **服务端 INFO 日志（便于排障）**：搜索 `Roster gen priority policy`、`Roster gen flexHeadcount`、`Roster gen restBudget`、`Roster gen dailyStructureLin`、`Roster structureLin anomaly`、`Roster weekendStat exclude` 可对齐一次生成的人头/休息/日结构临与排除名单。
 
 **请求体**：`RosterWeekGenerateRequest`
 
@@ -591,7 +594,7 @@
 
 ### `GET /api/v1/medir/roster-weeks/{weekId}/weekend-stats`
 
-读取本周「周末全天」「上周末」两列（含自动值与人工覆盖后的最终值）。
+读取本周「周末全天」「上周末」两列（含自动值与人工覆盖后的最终值）。**自动「周末全天」**：默认统计周六、周日班次类型在 `stats.weekend_full_shift_types`（如 `LIN`、`GUISUI_QUAN`）中的天数之和；**被 `stats.weekend_full_exclude_names` 点名的人员**（按姓名匹配）自动「周末全天」计 **0**（仍可通过 `PUT` 人工覆盖为非 0）。
 
 **`data`**：`RosterWeekWeekendStatResponse[]`。
 
@@ -756,7 +759,7 @@
 业务规则以键值存储；`team_id=0` 表示全局。常用键见种子 `002_seed_reference_data.sql`、`003_seed_rule_meta.sql`，例如：
 
 - `headcount.weekday_134` / `headcount.weekday_25` / `headcount.weekend_holiday`
-- `structure.min_zhong` / `structure.min_lin`
+- `structure.min_zhong` / `structure.min_lin`（周一至周五每天至少「结构临」，默认 2）/ `structure.min_lin_weekend`（周六、周日每天至少「结构临」，默认 1）
 - `duty.chain`（JSON）
 - `bone_marrow.weekdays`（JSON）
 - `post_rotation.weeks`
@@ -769,3 +772,11 @@
 
 - 业务规则：`.specify/requirements-lab-roster-scheduling.md`
 - 表结构：`.specify/ddl/001_lab_roster_schema.sql`
+
+## 文档修订（节选）
+
+| 日期 | 说明 |
+|------|------|
+| 2026-04-18 | `POST .../generate` 行为说明；`medir_config` 新增 `structure.min_lin_weekend`（周末「结构临」默认 1），`structure.min_lin` 约束工作日（默认 2）。 |
+| 2026-04-18 | v0.15：需求 **§20**；新增配置 `rest.target_min_days`、`headcount.flex_floor_thursday`、`headcount.flex_floor_friday`、`stats.weekend_full_exclude_names`、`roster.weekend_lin_rotate_by_sort_order`；`GET weekend-stats` 说明排除名单；`POST generate` 补充 INFO 日志检索关键字。 |
+| 2026-04-18 | `PUT .../cells` 响应 **`data`** 改为 `RosterWeekWeekendStatResponse[]`：保存单元格后返回与 `GET .../weekend-stats` 一致的周末统计（自动值 + 最终值），便于前端一次刷新两列。 |

@@ -73,3 +73,4 @@ npm run build   # vue-tsc -b && vite build
 |------|------|
 | 2026-04-11 | 初版：脚手架、API 封装、各管理页与排班周矩阵 |
 | 2026-04-17 | 增加「文档同步约定」：代码/需求变更须同步更新需求说明与接口对齐文档 |
+| 2026-04-17 | `PUT .../roster-weeks/{id}/cells` 成功响应携带周末统计数组；`putRosterWeekCells` + 排班周页保存/清空后用返回结果 `applyWeekendStats`（见 `rest-api-frontend-alignment.md`） |

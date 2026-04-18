@@ -38,4 +38,4 @@ springdoc:
 logging:
   level:
     root: INFO
-    com.mediroster: DEBUG
+    com.mediroster: info

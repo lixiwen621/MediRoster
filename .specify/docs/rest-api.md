@@ -188,6 +188,8 @@
 **RosterWeekGenerateRequest**: `strategy`(string: FILL_UNCONFIRMED/OVERWRITE_ALL), `respectManualConfirmed`(integer, 默认1), `dryRun`(integer, 默认0), `reason`(string, 可选)
 **RosterWeekGenerateResponse**: `weekId`, `strategy`, `generatedCellCount`, `overwrittenCellCount`, `skippedConfirmedCount`, `dryRun`, `message`
 
+> 生成约束：每人每周最多 2 个全天（LIN/GUISUI_QUAN，即 countsAsLinForStructure=1）；手动排班优先，已有单元格计入全天配额。
+
 ### Excel 导出 `/api/v1/medir/roster-weeks/{weekId}/export`
 
 **GET** — 下载 `.xlsx` 文件。成功时返回二进制流（非 JSON）。
@@ -234,7 +236,7 @@
 ## 常用规则键（medir_config）
 
 `team_id=0` 表示全局。常用键：
-- `headcount.weekday_134` / `headcount.weekday_25` / `headcount.weekend_holiday`
+- `headcount.weekday_134` / `headcount.weekday_2` / `headcount.weekday_5` / `headcount.weekend_holiday`
 - `structure.min_zhong` / `structure.min_lin`
 - `duty.chain`（JSON）
 - `bone_marrow.weekdays`（JSON）

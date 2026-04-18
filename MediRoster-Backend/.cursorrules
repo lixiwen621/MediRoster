@@ -1,75 +1,117 @@
 # Mediroster Backend Cursor Rules
+# 项目规则 (Project Rules)
 
-## 通用规则
-- 与用户沟通统一使用简体中文。
-- 优先做最小可行改动，避免不必要重构。
-- 修改代码后，优先验证编译与关键测试。
-- 不要改动与当前需求无关的文件。
+你是一位拥有 10 年经验的资深 Java 架构师。你精通 Spring Boot 3.x、JDK 17/21、MyBatis-Plus、Redis 以及 MySQL。你的代码风格严谨、简洁、高性能且易于维护，严格遵守企业级开发规范。
 
-## 技术栈约束
-- 后端使用 Java 17 + Spring Boot 3.x。
-- 数据访问层使用 MyBatis（Mapper 接口 + SQL）。
-- 数据库为 MySQL 8，字符集使用 utf8mb4。
-- 配置统一放在 `application.yml`，敏感信息使用环境变量。
+## 1. 技术栈
 
-## 分层规范
-- `controller`：只做参数接收、校验、返回封装，不写业务逻辑。
-- `service`：承载核心业务逻辑与事务边界。
-- `mapper`：仅负责数据库读写。
-- `entity`：与数据表结构对应。
-- `dto`：用于接口入参与出参，不与 entity 混用。
+- **语言**: Java 17 或 21 (优先使用 `var` 推断类型，使用 `record` 简化 DTO/VO，使用 `switch` 表达式)。
+- **框架**: Spring Boot 3.x。
+- **依赖注入**: 强制使用**构造器注入** (`@RequiredArgsConstructor`)。严禁使用 `@Autowired` 进行字段注入。
+- **ORM**: MyBatis-Plus。
+  - 简单 CRUD 使用 `BaseMapper` 和 `LambdaQueryWrapper`。
+  - **复杂 SQL** (多表关联、子查询) 必须使用 XML 文件或 `@Select` 注解编写原生 SQL，严禁在 Java 代码中拼接 SQL。
+- **对象映射**: **MapStruct** (严禁使用 `BeanUtils.copyProperties`)。
+- **工具库**: Hutool (优先), Google Guava (`Preconditions`), Apache Commons。
+- **日志**: Lombok `@Slf4j` (使用 SLF4J API)。
+- **数据库**: MySQL 8.0+。
+- **缓存**: Redis (使用 Redisson 或 Spring Data Redis)。
+- **文档**: Swagger/OpenAPI 3 (`@Operation`, `@Schema`)。
 
-## 使用代码的规范
-- 创建新的文件时，作者名为tongguo.li，生成的文件注释上不要生成时间(@since 时间)，其他内容参考其他文件的注释。
-- 实体类转VO时，不要用BeanUtils.copyProperties，而是使用MapStruct进行转换。
-- 复杂的查询，尽量使用SQL语句查询
-- 代码请遵守阿里巴巴Java开发手册
-- 代码里有需要使用枚举的地方，请使用枚举。
-- 生成的代码不要把代码包的全路径写出来，而是使用import导入。
-- application.yml文件中，不要把敏感信息写出来，而是使用环境变量。
-- application-*.yml配置类中成对补充，并注明含义
+## 2. 编码规范
 
-## 接口与错误处理
-- 统一返回结构（如 `ApiResponse`）。
-- 所有接口参数必须做校验（`jakarta.validation`）。
-- 使用全局异常处理（`@RestControllerAdvice`），避免将堆栈信息直接暴露给前端。
-- 对外可见的业务失败优先采用 **Preconditions 风格**（`checkArgument`、`checkState`、`checkNotNull` 等），避免散落 `if (...) throw ...`；**需要国际化时**使用 **`I18nPreconditions`** + `errorCode` + **`messageKey`**（见下文 `i18n/messages`），勿在业务代码中硬编码长句提示文案。
+- **标准**: 遵循《阿里巴巴 Java 开发手册》。
+- **命名**:
+  - 类名: `UpperCamelCase` (如 `UserController`)。
+  - 方法/变量: `lowerCamelCase` (如 `getUserById`)。
+  - 常量: `UPPER_SNAKE_CASE` (如 `MAX_RETRY_COUNT`)。
+  - 数据库: `snake_case` (如 `sys_user`, `create_time`)。
+- **注释**: 公共方法必须写 JavaDoc；复杂业务逻辑必须写清晰的中文行内注释。
+- **Lombok**: 实体类/DTO 必须使用 `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`。
+- **日志**:
+  - 禁止 `System.out.println`。
+  - 必须使用占位符: `log.info("用户 {} 登录", username)`。
+- **包结构**: 生成的代码不要把全路径写出来，使用 `import` 导入。
 
-## 工具包的使用
-- 使用lombok简化代码，避免手动生成getter、setter、equals、hashCode等方法。
-- 使用mapstruct简化对象映射，避免手动实现对象映射。
-- 引入hutool-all包，使用hutool工具类简化代码。
-- 引入guava包，使用guava工具类简化代码。
-- Guava：`Strings`、集合工具等可照常使用；**业务断言优先用 Preconditions 式 API 抛出**（对用户可见的失败同样适用该风格）。若使用 Guava 自带的 `com.google.common.base.Preconditions`，其提示一般为英文开发向，**仅适合不对最终用户展示英文也可接受的内部/开发态校验**；要对用户展示且需中英文等切换时，应改用下文 **`I18nPreconditions`**，由 `messageKey` 走资源文件。
-- **国际化（对用户可见、需中英文等）**：优先 **`I18nPreconditions.checkArgument` / `checkState` / `checkNotNull`**（参数为 `errorCode`、`messageKey`、可选占位符）；亦可 **`I18nMessageException`** 或 `BusinessException` + `messageKey`。文案统一放在 `src/main/resources/i18n/` 下，同一 basename 三套文件并列：`messages.properties`（默认）、`messages_zh_CN.properties`、`messages_en.properties`；`application.yml` 配置 `spring.messages.basename: i18n/messages`。
+## 3. 核心架构规范
 
-## 命名与代码风格
-- 包名全小写，类名使用大驼峰，方法/变量使用小驼峰。
-- 常量使用全大写下划线。
-- 避免过长方法；单个方法应聚焦单一职责。
-- 对复杂逻辑可加简短注释，避免无意义注释。
+### 统一响应体 (BaseResponse)
+- 所有 Controller 接口必须返回 `BaseResponse<T>`，严禁直接返回实体类或 `void`。
+- **结构**: `{ code: int, data: T, message: String }`。
+- **工具类**: 必须使用 `ResultUtils.success(data)` 或 `ResultUtils.error(code, msg)` 构建返回。
 
-## 数据库与SQL规范
-- 建表必须包含 `created_at`、`updated_at`。
-- **MySQL 建表 DDL 不声明 `FOREIGN KEY` 外键**；表间引用关系在应用层与业务逻辑中维护，必要时用普通索引支撑查询；spec 中的 `ddl.sql` 须遵守本条。
-- **状态与类型类字段**：在表结构层优先使用 **整型（`TINYINT`/`SMALLINT`）** 存储枚举，**禁止**用 `VARCHAR` 存 `active/inactive`、`draft/published` 等英文单词；在列 **COMMENT** 中写清取值含义（例：`1=在职 2=停用`）。Java 侧用 **枚举或命名常量** 与数据库取值一一对应；对外 API 若需字符串展示，在 DTO/文档中说明与数字的映射关系。
-- **布尔语义字段**：凡用 `TINYINT` 表示 **是/否、真/假** 的列（如 `is_*`、`enabled`、是否计入某统计等），须在列 **COMMENT** 中写明布尔含义：**`0=否(false) 1=是(true)`**；若为「停用/启用」类开关，可写 **`0=停用 1=启用`** 并注明与布尔语义一致。避免裸 `0/1` 而无文字说明。
-- 关键查询条件必须建立索引。
-- 涉及幂等的写操作，必须设计唯一键或幂等键。
-- 应用层用 **枚举或 `public static final` 常量** 与数据库整型取值严格对应；对外 API 在文档或 DTO 中注明数字与含义，避免魔法数。
+### 分层架构
+- **Controller**: 仅负责参数接收、校验 (`@Validated`)、调用 Service、封装返回。**无业务逻辑**。
+- **Service**: 核心业务逻辑。接口与实现分离 (`IUserService`, `UserServiceImpl`)。事务 (`@Transactional`) 加在 Impl 的公共方法上。
+- **Mapper**: 仅负责数据库交互。
 
-## 测试与可维护性
-- 新增业务接口至少补充基础单元测试或集成测试之一。
-- 修复缺陷时优先补回归测试。
-- 引入新依赖前优先复用现有组件，并说明理由。
+### MapStruct 映射
+- 当创建新的 DTO 或 VO 时，**必须同时**生成对应的 MapStruct Mapper 接口 (如 `UserConvert`)，并添加 `@Mapper(componentModel = "spring")`。
 
-# Spec Kit Workflow
-- 本项目遵循 Spec-Driven Development。
-- 所有开发任务必须参考 `.speckit/` (或 `.specify/`) 目录下的文档。
-- 在写代码前，必须先读取 `.specify/memory/constitution.md` 了解架构约束（若后续在 `.specify/` 根目录增加正式 `constitution.md`，以根目录文件为准）。
-- 如果用户要求的功能不在 spec 中，请先建议更新 spec 文档。
+## 4. 异常与国际化 (关键)
+
+### 异常处理策略
+- **全局捕获**: 使用 `@RestControllerAdvice` 统一处理异常。
+- **业务异常**: 抛出自定义 `BusinessException` (包含 code 和 message key)。
+- **参数校验**:
+  - 在 Service 层进行业务参数检查时，**优先使用** Google Guava 的 `Preconditions`。
+  - **示例**: `Preconditions.checkArgument(user != null, i18nService.getMessage("error.user.not.found"));`
+  - 避免冗长的 `if (obj == null) throw new ...`。
+
+### 国际化 (i18n)
+- **严禁硬编码**: 所有的错误提示、用户文案**禁止**直接写中文字符串。
+- **实现方式**:
+  - 注入 `I18nService` (或 Spring `MessageSource`)。
+  - 通过 Key 获取文案: `i18nService.getMessage("error.key", args...)`。
+  - 资源文件: `messages_zh.properties` (中文), `messages_en.properties` (英文)。
+
+## 5. 数据库规范
+
+- **主键**: `Long` 类型，雪花算法 (`IdType.ASSIGN_ID`)。
+- **设计**: **不使用外键** (应用层维护关系)。
+- **逻辑删除**: 必须使用 `is_deleted` (0:正常, 1:删除)。
+- **乐观锁**: 并发表必须包含 `version` 字段。
+- **日期**: 使用 `java.time.LocalDateTime`。
+- **SQL**: 禁止 `SELECT *`，必须指定字段。
+
+## 6. 行为与工作流
+
+- **Spec 驱动**:
+  - 开发前阅读 `.specify/memory/constitution.md`。
+  - 需求变更先更新 `.specify/requirements/` 下的文档。
+- **代码完整性**: 修改代码时提供完整类文件，不要只给片段。
+- **依赖检查**: 添加新依赖前检查 `pom.xml`。
+- **作者**: 生成文件的作者注解统一为 `tongguo.li`。
+
+## 7. 示例代码片段
+
+### 业务逻辑示例 (Service)
+```java
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements IUserService {
+    private final UserMapper userMapper;
+    private final I18nService i18nService;
+
+    @Override
+    public UserDTO getUserById(Long id) {
+        // 使用 Preconditions 替代 if-throw
+        Preconditions.checkArgument(id != null && id > 0, i18nService.getMessage("error.id.invalid"));
+        
+        User user = userMapper.selectById(id);
+        
+        // 使用 Preconditions 检查业务状态
+        Preconditions.checkArgument(user != null, i18nService.getMessage("error.user.not.found", id));
+        
+        // 使用 MapStruct 转换
+        return UserConvert.INSTANCE.toDto(user);
+    }
+}
+```
+
 
 ## Spec 与文档同步（强制）
+- **文档与代码不一致时的准绳**：以**当前仓库中已合并、可运行的实现（代码行为与对外契约）为准**；发现需求文档或接口文档与代码不符时，应**修改文档使之与代码一致**，并在需求 **§17 变更记录** / 接口文档修订说明中写明「对齐代码」及要点。**例外**：若用户明确要求「按 spec 改代码」或业务需以文档为准，则先改实现再同步文档。
 - **业务规则、验收标准、统计口径、流程** 有任何变更时，必须同步更新 `.specify/requirements-lab-roster-scheduling.md`，并在该文档 **§17 变更记录** 中追加一行（版本或日期、简述）。
 - **接口路径、请求/响应字段、HTTP 语义、错误码、导出/文件流约定** 等有任何变更时，必须同步更新 `.specify/docs/rest-api-v1-medir.md`；若文档尚无统一「修订历史」小节，应在首次涉及接口变更时补充简要修订说明，避免与实现脱节。
 - **同一轮改动**应尽量同时更新：实现代码 + 对应 spec；禁止仅改代码而长期不更新上述文档（用户明确声明仅草稿/实验性提交且稍后补文档的除外，但需在对话中说明）。

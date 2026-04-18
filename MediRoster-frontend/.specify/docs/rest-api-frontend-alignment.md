@@ -24,7 +24,7 @@
 | 排班周 | 列表：`teamId`、`year`；`RosterWeekResponse`：`weekStartDate`（周一）、**`yearLabel`**（无 `weekNumber`） |
 | 创建周 | `RosterWeekCreateRequest`：`teamId`、`weekStartDate`、`yearLabel`、`status`、`remark` |
 | 更新周 | `RosterWeekUpdateRequest`：`yearLabel`、`status`、`remark`、`version` |
-| 单元格 | `PUT .../cells` 体仅 **`cells`**（无 `version`）；元素 **`workDate`**、`shiftTypeId`、**`validationExempt`**（0/1）等 |
+| 单元格 | `PUT .../cells` 请求体仅 **`cells`**（无 `version`）；元素 **`workDate`**、`shiftTypeId`、**`validationExempt`**（0/1）等。**成功时 `data` 为 `RosterWeekWeekendStatResponse[]`**（与 `GET .../weekend-stats` 同结构，含 `weekendFullAuto`/`weekendFullFinal`、`lastWeekendAuto`/`lastWeekendFinal`、`isOverridden` 等）；前端用 `unwrap` 取数组，保存单元格/清空后可直接刷新周末列，无需再 GET 统计（与仅改单元格无关的流程仍可按需 GET） |
 | 半自动生成 | `POST .../roster-weeks/{weekId}/generate`：`RosterWeekGenerateRequest`（`strategy`：`FILL_UNCONFIRMED` / `OVERWRITE_ALL`，`respectManualConfirmed` 0/1，`dryRun` 0/1，`reason`）；响应 `RosterWeekGenerateResponse`（`generatedCellCount`、`skippedConfirmedCount` 等） |
 | Excel 导出 | `GET .../roster-weeks/{weekId}/export`：返回 `.xlsx` 二进制流（非 `ApiResponse`）；前端需 `responseType='blob'`，从 `Content-Disposition` 解析文件名 |
 | 周末统计 | `GET/PUT .../weekend-stats`：读取 `weekendFullAuto/final`、`lastWeekendAuto/final`、`isOverridden`、`overrideReason`；保存体 `items[]` 使用 `weekendFullOverride`、`lastWeekendOverride`、`overrideReason`（`null` 表示恢复自动） |

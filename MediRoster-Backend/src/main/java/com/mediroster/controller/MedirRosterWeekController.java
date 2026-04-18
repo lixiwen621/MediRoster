@@ -87,10 +87,10 @@ public class MedirRosterWeekController {
     }
 
     @PutMapping("/{weekId}/cells")
-    @Operation(summary = "覆盖整周单元格（先删后插）")
-    public ApiResponse<Void> replaceCells(@PathVariable Long weekId, @Valid @RequestBody RosterCellReplaceRequest req) {
-        rosterService.replaceCells(weekId, req);
-        return ApiResponse.ok();
+    @Operation(summary = "覆盖整周单元格（先删后插）；响应含当周周末统计（自动值与最终值，与 GET weekend-stats 一致）")
+    public ApiResponse<List<RosterWeekWeekendStatResponse>> replaceCells(
+            @PathVariable Long weekId, @Valid @RequestBody RosterCellReplaceRequest req) {
+        return ApiResponse.ok(rosterService.replaceCells(weekId, req));
     }
 
     @PostMapping("/{weekId}/generate")
